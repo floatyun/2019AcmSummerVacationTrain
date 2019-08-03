@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+string d2h = "0123456789abcdef";
+
+char to_hex(string& b, int l) {
+  int v = 0;
+  for (int i = 0; i < 4; ++i) v = v * 2 + b[i + l] - '0';
+  return d2h[v];
+}
+
+void set_field(string& s, int l, string& f) {
+  bool zero = true;
+  f = "";
+  for (int i = 0; i < 4; ++i) {
+    auto c = to_hex(s, l + i * 4);
+    zero = zero && (c == '0');
+    if (!zero) f += c;
+  }
+  if (zero) f += '0';
+}
+
+void to_fileds(string& s, vector<string>& fileds) {
+  fileds.clear();
+  fileds.resize(8);
+  for (int i = 0; i < 8; ++i) set_field(s, i * 16, fileds[i]);
+}
+
+void work(int cid) {
+  string line;
+  cin >> line;
+  vector<string> fileds;
+  to_fileds(line, fileds);
+  int cnt[9];
+  // cnt[i+1]表示到i位置的连续“零域”的个数
+  cnt[0] = 0;
+  for (int i = 0; i < 8; ++i) cnt[i + 1] = (fileds[i] != "0") ? 0 : 1 + cnt[i];
+  int sel_pos, sel_sub_len = 0;
+	int sel_zero_cnt;
+  bool first = true;
+  int pos, sub_len;
+  for (int i = 0; i < 8; ++i) {
+		if (!cnt[i+1]) first = false;
+    if (cnt[i + 1] <= 1) continue;
+    if (i + 1 < 8 && cnt[i + 2]) continue;  // 后面的0的个数更多
+    pos = i + 1 - cnt[i + 1];
+    if (i + 1 >= 8) {  // 后面没有了，说明是结尾的0串
+      sub_len = 2 * cnt[i + 1] - 2;
+    } else {  // assert(cnt[i+2]=0) 后面是个非零
+      sub_len = 2 * cnt[i + 1] - 1;
+      if (first) --sub_len, first = false;
+    }
+		if (sub_len >= sel_sub_len) { // 减去长度相同时，取后面的
+			sel_pos = pos;
+			sel_sub_len = sub_len;
+			sel_zero_cnt = cnt[i+1];
+		}
+  }
+	string ans = "";
+	if (0 == sel_sub_len) {
+		for (auto &f : fileds) ans += f + ':';
+		ans.pop_back();
+	} else {
+		for (int i = 0; i < sel_pos; ++i)
+			ans += fileds[i] + ':';
+		if (!ans.empty()) ans.pop_back();
+		ans += "::";
+		for (int i = sel_pos + sel_zero_cnt; i < 8; ++i)
+			ans += fileds[i] + ':';
+		if (sel_pos + sel_zero_cnt < 8)
+		 	ans.pop_back();
+	}
+  cout<<"Case #"<<cid<<": "<<ans<<endl;
+}
+
+int main() {
+  int t;
+  cin >> t;
+  for (int ti = 1; ti <= t; ++ti) work(ti);
+  return 0;
+}

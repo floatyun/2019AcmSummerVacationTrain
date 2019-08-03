@@ -1,0 +1,137 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int kMaxN = 1005;
+const int kMaxM = 1005;
+const int kMaxV = 1000;
+typedef long long ll;
+int ans;
+string d2h = "0123456789abcdef";
+string kMax(40, 'z');
+
+struct filed {
+  string _val;
+  void format() {
+    auto pos = _val.find_first_not_of('0');
+    if (pos == string::npos) pos = _val.length() - 1;
+    _val = _val.substr(pos);
+  }
+};
+struct ipv6 {
+  filed fileds[8];
+  string s2;
+  string s1;
+  string ans;
+  int l_ans;
+  void format() {
+    for (int i = 0; i < 8; ++i) fileds[i].format();
+  }
+  void get_s1() { s1 = to_s(0, 8); }
+  string to_s(int l, int r) {
+    string s = "";
+    for (int i = l; i < r; ++i) s += fileds[i]._val + ':';
+    if (!s.empty()) s.pop_back();
+    return s;
+  }
+  int longest_zeros_cnt;
+  vector<int> pos;
+  void get_longest_zeros_cnt() {
+    int l = 8;
+    int i = 0, j = 0;
+    longest_zeros_cnt = 0;
+    while (true) {
+      for (i = j; i < l; ++i)
+        if (fileds[i]._val == "0") break;
+      if (i >= l) break;
+
+      for (j = i; j < l; ++j)
+        if (fileds[j]._val != "0") break;
+      longest_zeros_cnt = max(longest_zeros_cnt, j - i);
+    }
+  }
+  void get_all_longest_zeros_pos() {
+    get_longest_zeros_cnt();
+    pos.clear();
+    int l = 8;
+    int i = 0, j = 0;
+    while (true) {
+      for (i = j; i < l; ++i)
+        if (fileds[i]._val == "0") break;
+      if (i >= l) break;
+      for (j = i; j < l; ++j)
+        if (fileds[j]._val != "0") break;
+      if (j - i == longest_zeros_cnt) pos.push_back(i);
+    }
+  }
+  void print_fileds() {
+    cout << "fileds=[";
+    for (auto p : fileds) cout << p._val << ", ";
+    cout << "]" << endl;
+  }
+  void print_pos() {
+    cout << "pos=[";
+    for (auto p : pos) cout << p << ", ";
+    cout << "]" << endl;
+  }
+  void get_ans() {
+    format();
+    get_s1();
+    // print_fileds();
+    get_all_longest_zeros_pos();
+    // print_pos();
+    string tmp;
+    int l_tmp;
+    ans = kMax;
+    l_ans = ans.length();
+    tmp = s1;
+    l_tmp = tmp.length();
+    if (l_tmp < l_ans) {
+      ans = tmp;
+      l_ans = l_tmp;
+    } else if (l_tmp == l_ans && tmp < ans) {
+      ans = tmp;
+      l_ans = l_tmp;
+    }
+    if (longest_zeros_cnt < 2) return;
+    for (auto i : pos) {
+      auto j = i + longest_zeros_cnt;
+      //[i,j)
+      tmp = to_s(0, i) + "::" + to_s(j, 8);
+      // cout<<"(i,j)="<<i<<","<<j<<"\tt1,t2="<<t1<<","<<t2<<"===\ttmp="<<tmp<<endl;
+      l_tmp = tmp.length();
+      if (l_tmp < l_ans) {
+        ans = tmp;
+        l_ans = l_tmp;
+      } else if (l_tmp == l_ans && tmp < ans) {
+        ans = tmp;
+        l_ans = l_tmp;
+      }
+    }
+  }
+};
+
+void work(int cid) {
+  string s;
+  cin >> s;
+  int l = s.length();
+  ipv6 ip;
+  string ss;
+  for (int i = 0; i < l; i += 4) {
+    int t = 0;
+    for (int j = i; j < i + 4; ++j) t = (t * 2) + s[j] - '0';
+    ss += d2h[t];
+  }
+  l = ss.length();
+  for (int i = 0; i < l; i += 4) {
+    ip.fileds[i / 4]._val.clear();
+    for (int j = i; j < i + 4; ++j) ip.fileds[i / 4]._val += ss[j];
+  }
+  ip.get_ans();
+  cout << "Case #" << cid << ": " << ip.ans << endl;
+}
+
+int main() {
+  int t;
+  cin >> t;
+  for (int i = 1; i <= t; ++i) work(i);
+  return 0;
+}
