@@ -3,29 +3,20 @@ using namespace std;
 typedef long long ll;
 
 bool work(string &s, int &l, int &cnt) {
-	string p;
-	int i = 0;
+	vector<char>p(l+2);
+	p[0] = p[1] = '#';
+	int n = 2;
 	int c = 0;
-	while (i < l) {
-		if (i+1 >= l || s[i+1] != s[i]) {
-			p += s[i];
-			++i;
-			continue;
-		}
-		if (i+2 >= l || s[i+2] != s[i]) {
-			p += s[i];
-			p += s[i+1];
-			i += 2;
-		} else {
-			// 消除
+	for (int i = 0; i < l; ++i) {
+		if (s[i] == p[n-1] && s[i] == p[n-2]) {
+			n -= 2;
 			++c;
-			i += 3;
+		} else {
+			p[n++] = s[i];
 		}
 	}
-	s = p;
-	l -= 3*c;
 	cnt += c;
-	return c;
+	return false;
 }
 
 int main()
