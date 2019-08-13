@@ -13,10 +13,16 @@ int main()
 		auto d = __gcd(n,m);
 		n /= d; m /= d;
 		n += m-1;
-		if (n&1)
-			cout<<flag+n/2<<"/"<<(flag^1)+n/2<<"\n";
-		else
-			cout<<"1/1\n";
+		int b = flag+n/2;
+		int w = flag+n/2;
+		int k = d/2;
+		int r = d&1;
+		int B = k*n+r*b;
+		int W = k*b+r*w;
+		int dd = __gcd(B,W);
+		B /= dd;
+		W /= dd;
+		cout<<B<<"/"<<W<<"\n";
 	}
 	return 0;
 }
