@@ -191,9 +191,6 @@ void init() {
 void get_anti_infos(vector<vec>&vecs, int n, vector<isodirectional_info>& infos, vector<anti_info>&anti_infos) {
 	int now = 0;
 	int anti = 1;
-	// auto is_inverse = [](const vec& a, const vec& b) {
-  //   return lsq::dcmp(lsq::Cross(a, b)) == 0 && lsq::dcmp(lsq::Dot(a, b)) < 0;
-  // };
 	anti_infos.clear();
 	while (now < n) {
 		// find the anti(now)
@@ -247,9 +244,6 @@ ll count_around(point d) {
   sort(vecs.begin(), vecs.end(), anti_clock_order);  // O(nlnn)
   int n = vecs.size();
 
-	// for (int i = 0; i < n; ++i)
-	// 	cout<<"i = "<<i<<"\t "<<vecs[i].x<<", "<<vecs[i].y<<endl;
-
   // generate vec_id
   vector<int> vec_ids;
   vector<isodirectional_info> isodir_infos;
@@ -286,17 +280,6 @@ ll count_around(point d) {
 
 	auto &infos = isodir_infos;
 
-	// string line(80,'_');
-	// cout<<line<<endl;
-	// for (int i = 0; i < 2*n; ++i)
-	// 	cout<<"i = "<<i<<"\t "<<vecs[i].x<<", "<<vecs[i].y<<endl;
-	// cout<<line<<endl;
-	// for (int i = 0; i < 2*n; ++i)
-	// 	cout<<"i = "<<i<<"\t vec_ids[i] = "<<vec_ids[i]<<endl;
-	// cout<<line<<endl;
-	// for (int i = 0; i < 2*vec_id; ++i)
-	//  cout<<"i = "<<i<<"\t infos[i]"<<infos[i].first<<", "<<infos[i].last<<", "<<infos[i].cnt<<endl;
-
   ll ans = 0;
   // 对每个vec_id产生旋转180° 单个需要O(N)，但是n个可以总体O(n)
 	vector<anti_info> anti_infos;
@@ -309,11 +292,6 @@ ll count_around(point d) {
 			anti_infos[i].cnt,
 			anti_infos[i].real_vec_id
 		});
-
-	// cout<<line<<endl;
-	// for (int i = 0; i < 2*vec_id; ++i)
-	// 	cout<<"i = "<<i<<"\t anti[i]"<<anti_infos[i].first<<", "<<anti_infos[i].last<<", "<<anti_infos[i].cnt<<endl;
-
 
 	seg_tr.init(n*2+10);
 	seg_tr.build();
@@ -334,47 +312,32 @@ ll count_around(point d) {
 	int Aid, Bid;
 	int pre_antiA_last;
 	bool is_first = true;
-	//auto &infos = isodir_infos;
-	// ll tmp_val;
 	for (Aid = 0; Aid < vec_id; ++Aid) {
 		//A = infos[Aid].first;
 		L = infos[Aid].last + 1;
 		R = anti_infos[Aid].first; // [l,r)--->[l,R)
 		if (!is_first) {
 			// 原区间集体减去
-			// tmp_val = anti_infos[Aid].last - pre_antiA_last;
-			// cout<<"minus "<<l<<", "<<r<<"\t"<<tmp_val<<endl;
 			if (l < r)
 				seg_tr.add(l,r,-(anti_infos[Aid].last - pre_antiA_last));
 		}
-		// cout<<"Aid= "<<Aid<<endl;
-		// cout<<"l,r="<<l<<","<<r<<endl;
-		// cout<<"L,R="<<L<<","<<R<<endl;
 		// 单点修改增加元素
 		for (B = max(L, r); B < R; ++B) {
 			// 线段树原始数组a[B]的值，使用单点修改修改即可。
 			// 注意a[B]原本肯定是0.所以只需要调用区间集体加函数即可。
 			Bid = vec_ids[B];
-			// cout<<"B="<<B<<endl;
-			// cout<<"Bid="<<Bid<<endl;
-			// tmp_val = anti_infos[Bid].first - anti_infos[Aid].last - 1;
-			// cout<<" set "<<B<<"\t\t"<<tmp_val<<endl;
 			seg_tr.add(
 				B,B+1, // 区间[B,B+1)
 				anti_infos[Bid].first - anti_infos[Aid].last - 1
 			);
 		}
 		if (L < R) {
-			// tmp_val = seg_tr.get_sum(L, R);
-			// cout<<"query "<<L<<",   "<<R<<" sum = "<<tmp_val<<endl;
-			// cout<<"cnt = "<<infos[Aid].cnt<<endl;
 			ans += infos[Aid].cnt*seg_tr.get_sum(L, R);
 		}
 		l = L; r = R;
 		is_first = false;
 		pre_antiA_last = anti_infos[Aid].last;
 	}
-	// cout<<"ans = "<<ans<<endl;
   return ans / 3;  // 每一个ABC-D的flower都会被计数3次
 }
 
