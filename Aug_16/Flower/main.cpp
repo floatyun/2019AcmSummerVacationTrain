@@ -125,7 +125,7 @@ void get_vecs(int d) {
 }
  
 // a,b都是非零向量
-bool is_same_dir(const vec&a, const vec&b) { return abs(a%b) < 1e-6 && a*b > 0; }
+bool is_same_dir(const vec&a, const vec&b) { return a%b == 0 && a*b > 0; }
  
 void get_dir() {
     // 如果和前面的方向相同，那么就应该用前面的dir
