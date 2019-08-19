@@ -84,12 +84,12 @@ namespace lly {
 			inline int mid() { return l + (r - l) / 2; }
 		};
 
-		item_type a[kMaxItemSize];
+		//item_type a[kMaxItemSize]; 特殊修正
 		nd nds[kMaxSegTreeSize];
 
 		void init(int cnt) {
 			n = cnt;
-			memset(a, 0, sizeof(a));
+			//memset(a, 0, sizeof(a)); 特殊修正
 			seg_sz = (2 << (int)(ceil( log2(item_sz) ))) - 1;
 		}
 
@@ -103,7 +103,7 @@ namespace lly {
 			auto &p = nds[root];
 			p.l = i;
 			p.r = i + 1;
-			p.sm = a[i];
+			p.sm = 0; // 修正版。
 		}
 
 		inline void merge_flags(int root) {
@@ -125,6 +125,17 @@ namespace lly {
 			build(l, m, lchild(root));
 			build(m, r, rchild(root));
 			merge_flags(root);
+		}
+
+		void clear() { clear(0, n, 0); }
+
+		void clear(int l, int r, int root) {
+			nds[root].all_add = 0;
+			nds[root].sm = 0;
+			if (l + 1 == r) return;
+			int m = l + (r - l) / 2;
+			clear(l, m, lchild(root));
+			clear(m, r, rchild(root));
 		}
 
 		// [l,r)区间的数都加上val
@@ -188,10 +199,26 @@ void init() {
   for (auto& p : init_p) cin >> p.x >> p.y;
 }
 
-void get_anti_infos(vector<vec>&vecs, int n, vector<isodirectional_info>& infos, vector<anti_info>&anti_infos) {
+
+bool anti_clock_order(const point& a, const point& b) {
+	return atan2(a.y, a.x) < atan2(b.y, b.x);
+};
+
+// 注意a,b 都是非零向量
+bool is_isodirectional(const vec& a, const vec& b) {
+	return lsq::dcmp(lsq::Cross(a, b)) == 0 && lsq::dcmp(lsq::Dot(a, b)) >= 0;
+};
+
+lly::segment_tree seg_tr;
+vector<vec> vecs(2*kMaxPointCount);
+vector<int> vec_ids(2*kMaxPointCount);
+vector<isodirectional_info> isodir_infos(2*kMaxPointCount);
+auto &infos = isodir_infos;
+vector<anti_info> anti_infos(2*kMaxPointCount);
+
+void get_anti_infos(int n) {
 	int now = 0;
 	int anti = 1;
-	anti_infos.clear();
 	while (now < n) {
 		// find the anti(now)
 		vec &now_vec = vecs[infos[now].first];
@@ -200,101 +227,93 @@ void get_anti_infos(vector<vec>&vecs, int n, vector<isodirectional_info>& infos,
 			// anti 和 now 肯定不同向，所以只需要点积小于（逆时针旋转超过180°）等于（恰好180°）0即可。
 			int res = lsq::dcmp(lsq::Cross(now_vec, vecs[infos[anti].first]));
 			if (res == 0) {
-				anti_infos.emplace_back(anti_info{
-					infos[anti].first, // first
-					infos[anti].last, // last
-					infos[anti].cnt,// cnt
-					anti%n// real vec_id
-				});
+				anti_infos[now].first = infos[anti].first; // first
+				anti_infos[now].last = infos[anti].last; // last
+				anti_infos[now].cnt = infos[anti].cnt;// cnt
+				anti_infos[now].real_vec_id =	anti%n; // real vec_id
 				flag = true;
 				break;
 			} else if (res < 0) {
-				anti_infos.emplace_back(anti_info{
-					infos[anti - 1].last + 1, // first
-					infos[anti - 1].last, // last
-					0, // cnt
-					-1 // real_vec_id
-				});
+				anti_infos[now].first = infos[anti - 1].last + 1; // first
+				anti_infos[now].last = infos[anti - 1].last; // last
+				anti_infos[now].cnt = 0, // cnt
+				anti_infos[now].real_vec_id = -1; // real_vec_id
 				flag = true;
 				break;
 		  }
 	  }
 		if (!flag) {
 			// 说明枚举范围内的都是小于180°
-			anti_infos.emplace_back(anti_info{
-				infos[anti - 1].last + 1, // first
-				infos[anti - 1].last, // last
-				0, // cnt
-				-1 // real_vec_id
-			});
+			anti_infos[now].first = infos[anti - 1].last + 1; // first
+			anti_infos[now].last = infos[anti - 1].last; // last
+			anti_infos[now].cnt = 0; // cnt
+			anti_infos[now].real_vec_id = -1; // real_vec_id
 		}
 		++now;
 	}
 }
 
-lly::segment_tree seg_tr;
+void out_basic_infos(int n, int vec_id) {
+	string line(80,'#');
+	string line2 = "^_^";
+	while (line2.length() < 80) line2 += line2;
+	for (int i = 0; i < 2*n; ++i)
+		printf("i = %d\t vecs[i] = (%lf,%lf)\n", i, vecs[i].x, vecs[i].y);
+	cout<<line<<endl;
+	for (int i = 0; i < 2*n; ++i)
+		printf("i = %d\t vec_ids[i] = %d\n", i, vec_ids[i]);
+	cout<<line<<endl;
+	for (int i = 0; i < 2*vec_id; ++i)
+		printf("i = %d\t infos[i] = %d %d   %d\n", i, infos[i].first, infos[i].last, infos[i].cnt);
+	cout<<line<<endl;
+	for (int i = 0; i < 2*vec_id; ++i)
+		printf("i = %d\t anti_infos[i] = %d %d   %d   %d\n", i, anti_infos[i].first, anti_infos[i].last, anti_infos[i].cnt,anti_infos[i].real_vec_id);
+	cout<<line2<<endl;
+}
+
 ll count_around(point d) {
   // generate vecs
-  vector<vec> vecs;
+  int n = 0;
   for (auto& p : init_p)
-    if (!(p == d)) vecs.push_back(p - d);
-  auto anti_clock_order = [](const point& a, const point& b) {
-    return atan2(a.y, a.x) < atan2(b.y, b.x);
-  };
-  sort(vecs.begin(), vecs.end(), anti_clock_order);  // O(nlnn)
-  int n = vecs.size();
+    if (!(p == d)) vecs[n++] = p - d;
+  sort(vecs.begin(), vecs.begin() + n, anti_clock_order);  // O(nlnn)
 
   // generate vec_id
-  vector<int> vec_ids;
-  vector<isodirectional_info> isodir_infos;
   int vec_id = -1;
-
-  // 注意a,b 都是非零向量
-  auto is_isodirectional = [](const vec& a, const vec& b) {
-    return lsq::dcmp(lsq::Cross(a, b)) == 0 && lsq::dcmp(lsq::Dot(a, b)) >= 0;
-  };
-
   for (int i = 0; i < n; ++i)
     if (i && is_isodirectional(vecs[i - 1], vecs[i])) {
-      vec_ids.push_back(vec_id);
+      vec_ids[i] = vec_id;
     } else {
 			if (vec_id >= 0) isodir_infos[vec_id].last = i - 1;
-      ++vec_id; isodir_infos.emplace_back(isodirectional_info());
-      vec_ids.push_back(vec_id);
+      ++vec_id;
+      vec_ids[i] = vec_id;
       isodir_infos[vec_id].first = i;
     }
   if (vec_id >= 0) isodir_infos[vec_id].last = n - 1;
-	++vec_id;
-  for (auto& x : isodir_infos) x.cnt = x.last - x.first + 1;
+	
+	++vec_id; // now vec_id表示的isodir_infos的大小
+  for (int i = 0; i < vec_id; ++i) infos[i].cnt = infos[i].last - infos[i].first + 1;
   // double copy
-  for (int i = 0; i < n; ++i) {
-    vecs.push_back(vecs[i]);
-    vec_ids.push_back(vec_ids[i] + n);
-  }
-	for (int i = 0; i < vec_id; ++i)
-		isodir_infos.push_back(isodirectional_info{
-			isodir_infos[i].first + n,
-			isodir_infos[i].last + n,
-			isodir_infos[i].cnt
-		});
-
-	auto &infos = isodir_infos;
+  for (int i = 0; i < n; ++i) vecs[i+n] = vecs[i];
+	for (int i = 0; i < n; ++i) vec_ids[i+n] = vec_ids[i] + n;
+	for (int i = 0; i < vec_id; ++i) {
+		infos[i+vec_id].first = infos[i].first+n;
+		infos[i+vec_id].last = infos[i].last+n;
+		infos[i+vec_id].cnt = infos[i].cnt; 
+	}
 
   ll ans = 0;
   // 对每个vec_id产生旋转180° 单个需要O(N)，但是n个可以总体O(n)
-	vector<anti_info> anti_infos;
-	get_anti_infos(vecs, vec_id, isodir_infos, anti_infos);
+	get_anti_infos(vec_id);
+	// double copy
+	for (int i = 0; i < vec_id; ++i) {
+		anti_infos[i+vec_id].first = anti_infos[i].first + n,
+		anti_infos[i+vec_id].last = anti_infos[i].last + n,
+		anti_infos[i+vec_id].cnt = anti_infos[i].cnt,
+		anti_infos[i+vec_id].real_vec_id = anti_infos[i].real_vec_id;
+	}
 
-	for (int i = 0; i < vec_id; ++i)
-		anti_infos.emplace_back(anti_info{
-			anti_infos[i].first + n,
-			anti_infos[i].last + n,
-			anti_infos[i].cnt,
-			anti_infos[i].real_vec_id
-		});
-
-	seg_tr.init(n*2+10);
-	seg_tr.build();
+	
 	// 枚举vec_id vec_id->vec_id+1
   // 对每个vec_id产生 计算查询的区间的l和r O(1)
 		// 查询区间和 O(lnn)，ans+=区间和
@@ -305,7 +324,8 @@ ll count_around(point d) {
 		// 但因为预处理的几个数组计算可以O(1)
 		// 虽然每次vec_id--->vec_id+1需要进行的单点修改的个数不确定，
 		// 但是整体分析知道单点修改次数恰好是O(n)级别，单点修改总复杂度O(nlnn)
-	
+	// out_basic_infos(n, vec_id);
+	seg_tr.clear();
 	int l = 0, r = 0, L, R;
 	// int A;
 	int B;
@@ -318,30 +338,46 @@ ll count_around(point d) {
 		R = anti_infos[Aid].first; // [l,r)--->[l,R)
 		if (!is_first) {
 			// 原区间集体减去
+			// printf("minus [%d,%d) %d\n", l, r, anti_infos[Aid].last - pre_antiA_last);
 			if (l < r)
 				seg_tr.add(l,r,-(anti_infos[Aid].last - pre_antiA_last));
 		}
-		// 单点修改增加元素
-		for (B = max(L, r); B < R; ++B) {
+		// printf("cal [L,R) [%d,%d)\n", L, R);
+		// 单点修改元素
+		for (B = max(L, r); B < R;) {
 			// 线段树原始数组a[B]的值，使用单点修改修改即可。
+			// 但是同一个Bid的B，值一定相同，可以区间加加速一丢丢
+			// 但是如果每个不一样还是退化成单点修改了。
 			// 注意a[B]原本肯定是0.所以只需要调用区间集体加函数即可。
 			Bid = vec_ids[B];
 			seg_tr.add(
-				B,B+1, // 区间[B,B+1)
+				B,infos[Bid].last+1, // 区间[B,infos[Bid].last+1)
 				anti_infos[Bid].first - anti_infos[Aid].last - 1
 			);
+
+			// printf("B = %d\n", B);
+			// printf("add [%d,%d) %d\n", B, infos[Bid].last+1, anti_infos[Bid].first - anti_infos[Aid].last - 1);
+			// printf("n = %d,vec_id = %d \t %d %d Bid Aid %d %d\n", n, vec_id, anti_infos[Bid].first, anti_infos[Aid].last, Aid, Bid);
+			B = infos[Bid].last + 1;
+			// printf("change B = %d\n", B);
 		}
 		if (L < R) {
+			// auto tmp_val = seg_tr.get_sum(L, R);
+			// cout<<"L = "<<L<<" R = "<<R<<" sum = "<<tmp_val<<" cnt = "<<infos[Aid].cnt<<endl;
 			ans += infos[Aid].cnt*seg_tr.get_sum(L, R);
 		}
 		l = L; r = R;
 		is_first = false;
 		pre_antiA_last = anti_infos[Aid].last;
 	}
+	// cout<<ans<<endl;
+	// printf("_____________________________________________________________________\n");
   return ans / 3;  // 每一个ABC-D的flower都会被计数3次
 }
 
 int main() {
+	seg_tr.init(2*kMaxPointCount);
+	seg_tr.build();
   init();
   ll ans = 0;
   for (auto d : init_p) ans += count_around(d);  // O(n)
