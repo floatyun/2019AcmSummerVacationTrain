@@ -111,14 +111,6 @@ void get_vecs(int d) {
 		vecs[i].set(sort_p[i]);
 	for (int i = 0, j = vecn; i < vecn; ++i, ++j)
 		vecs[j] = vecs[i];
-	#ifdef debugmode
-		printf("vecn = %d\n", vecn);
-		for (int i = 0; i < 2*vecn; ++i)
-			printf("i = %d (%lld, %lld)\n", i, vecs[i].x, vecs[i].y);
-		string s(80,'#');
-		cout<<s<<endl;
-	#else
-	#endif
 }
 
 // a,b都是非零向量
@@ -138,14 +130,6 @@ void get_dir() {
 	}
 	for (int i = 0, j = vecn; i < vecn; ++i, ++j)
 		vec_to_dir[j] = vec_to_dir[i] + dirn;
-	#ifdef debugmode
-		printf("dirn = %d\n", dirn);
-		for (int i = 0; i < 2*dirn; ++i)
-			printf("i = %d vec_to_dir[i] = %d\n", i, vec_to_dir[i]);
-		string s(80,'#');
-		cout<<s<<endl;
-	#else
-	#endif
 }
 
 void get_infos() {
@@ -161,14 +145,6 @@ void get_infos() {
 		infos[i].cnt = infos[i].last - infos[i].first + 1;
 	for (int i = 0, j = dirn; i < dirn; ++i, ++j)
 		infos[j].set(infos[i].first + vecn, infos[i].last + vecn);
-	#ifdef debugmode
-		printf("dirn = %d\n", dirn);
-		for (int i = 0; i < 2*dirn; ++i)
-			printf("i = %d infos[i] = %d,%d,%d\n", i, infos[i].first, infos[i].last, infos[i].cnt);
-		string s(80,'#');
-		cout<<s<<endl;
-	#else
-	#endif
 }
 
 void get_antiinfos() {
@@ -197,14 +173,6 @@ void get_antiinfos() {
 	}
 	for (int i = 0, j = dirn; i < dirn; ++i, ++j)
 		antiinfos[j].set(antiinfos[i].first + vecn, antiinfos[i].last + vecn);
-	#ifdef debugmode
-		printf("dirn = %d\n", dirn);
-		for (int i = 0; i < 2*dirn; ++i)
-			printf("i = %d antiinfos[i] = %d,%d,%d\n", i, antiinfos[i].first, antiinfos[i].last, antiinfos[i].cnt);
-		string s(80,'#');
-		cout<<s<<endl;
-	#else
-	#endif
 }
 
 ll solve() {
@@ -219,53 +187,24 @@ ll solve() {
 		L = infos[dA].last + 1;
 		R = antiinfos[dA].first;
 		need_work = L < R;
-		if (need_work && l < r) {
+		if (need_work && L < r) {
 			// 区间集体减
 			// assert(dA);
 			tmp_val = antiinfos[dA].last - antiinfos[dA-1].last;
-			add(l, r, -tmp_val);
-
-			#ifdef debugmode
-				printf("minus [%d,%d) %lld\n", l,r,tmp_val);
-			#else
-			#endif
+			assert(tmp_val>=0);
+			add(L, r, -tmp_val);
 		}
-		#ifdef debugmode
-			printf("cal [L,R) [%d,%d)\n", L, R);
-		#else
-		#endif
 		for (B = max(L, r); B < R; B = infos[dB].last + 1) {
 			dB = vec_to_dir[B];
 			add(B, infos[dB].last + 1, 
 				antiinfos[dB].first - antiinfos[dA].last - 1);
-			
-			#ifdef debugmode
-				printf("add [%d,%d) %d\n", B, infos[dB].last + 1,
-					antiinfos[dB].first - antiinfos[dA].last - 1);
-				printf("aBf = %d, aAl = %d\n", antiinfos[dB].first, antiinfos[dA].last);
-			#else
-			#endif
 		}
-		#ifdef debugmode
-			printf("finish cal [L,R) [%d,%d)\n", L, R);
-		#else
-		#endif
 		if (need_work) {
 			tmp_val = get_sum(L, R);
-			#ifdef debugmode
-				printf("getsum %lld, cnt = %d\n", tmp_val, infos[dA].cnt);
-			#else
-			#endif
 			ans += infos[dA].cnt * tmp_val;
 		}
 		l = L; r = R;
 	}
-	#ifdef debugmode
-		printf("ans:%lld %lld\n", ans/3, ans%3);
-		for (int i = 10; i < 20; ++i) printf("^_^ ");
-		putchar('\n');
-	#else
-	#endif
 	return ans;
 }
 
@@ -275,18 +214,10 @@ int main() {
 		scanf("%lld%lld",&inp[i].x, &inp[i].y);
 	ll ans = 0;
 	for (int d = 0; d < pn; ++d) {
-		#ifdef debugmode
-			printf("calculate D(%lld,%lld)\n", inp[d].x, inp[d].y);
-		#else
-		#endif
 		get_vecs(d);
 		get_dir();
 		get_infos();
-		if (dirn < 3) continue;
-		#ifdef debugmode
-			printf("continue calculate D(%lld,%lld)\n", inp[d].x, inp[d].y);
-		#else
-		#endif
+		//if (dirn < 3) continue;
 		get_antiinfos();
 		ans += solve();
 	}
