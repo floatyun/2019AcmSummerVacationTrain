@@ -1,0 +1,87 @@
+// -------------------------------------------------
+namespace Lsq{
+	#define bi(a) ((a - 1) / sqn + 1)
+	#define MAX_NUM 110000
+	#define LL long long
+	using namespace std;
+	int sqn;
+	int q, n;
+	int H[110000];
+	LL ANS[110000];
+	struct BIT {
+			LL SUM[110000];
+			LL NUM[110000];
+			int lowbit(int x) { return x & -x; }
+			BIT() {
+					memset(SUM, 0, sizeof(SUM));
+					memset(NUM, 0, sizeof(NUM));
+			}
+			void insert(int num) {
+					for (int i = num; i <= MAX_NUM; i += lowbit(i)) {
+							NUM[i] += 1;
+							SUM[i] += num;
+					}
+			}
+
+			void del(int num) {
+					for (int i = num; i <= MAX_NUM; i += lowbit(i)) {
+							NUM[i] -= 1;
+							SUM[i] -= num;
+					}
+			}
+
+			LL Q(int u, LL *s) {
+					LL ans = 0;
+					for (int i = u - 1; i > 0; i -= lowbit(i))
+							ans += s[i];
+					return ans;
+			}
+
+			LL query_n(int u) { return Q(u, NUM); }
+			LL query_s(int u) { return Q(u, SUM); }
+	}bit;
+
+	struct query{
+			int l,r;
+			int id;
+			query(int tid,int tl,int tr,LL tx,LL ty):id(tid),l(tl),r(tl){}
+			bool operator <(const query& t) const{
+					if (bi(l) == bi(t.l)) return r < t.r;
+					return l < t.l;
+			}
+	}Qu[11000]; // 所有的[l,r,x,y]的询问的数据数组，id表示的询问的编号 下标从1开始
+	inline void move(int pos, int sign) {
+			if(sign)
+					bit.insert(H[pos]);
+			else
+					bit.del(H[pos]);
+	}
+	void solve() {
+			int static l = 1;
+			int static r = 1;
+			sqn = int(ceil(pow(n, 0.5)));
+			bit.insert(H[1]);
+			for (int i = 1; i <= q; ++i) {
+					const query &q = Qu[i];
+					while (l > q.l) move(--l, 1);
+					while (r < q.r) move(++r, -1);
+					while (l < q.l) move(l++, 1);
+					while (r > q.r) move(r--, -1);
+					//ANS[q.id] = nowAns;
+			}
+	}
+
+	void init_H(int cnt, int src[]) {
+		n = cnt;
+		for (int i = 1; i <= n; ++i) H[i] = src[i-1];
+	}
+
+	int query_n(int l, int r, double u) {
+		return 0;
+	}
+
+	LL query_s(int l, int r, double u) {
+		return 1;
+	}
+};
+// lsq

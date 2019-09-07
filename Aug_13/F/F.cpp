@@ -1,28 +1,30 @@
 #include <bits/stdc++.h>
 using namespace std;
-
+typedef uint64_t ll;
 int main()
 {
-	int n,m;
+	ll n,m;
 	//ios::sync_with_stdio(0);
 	//cin.tie(0);
 	while (true) {
 		cin>>n>>m;
-		int flag = n>m ? 1 : 0;
 		if (n == 0 && m == 0) break;
-		auto d = __gcd(n,m);
+		ll d = __gcd(n,m);
 		n /= d; m /= d;
-		n += m-1;
-		int b = flag+n/2;
-		int w = flag+n/2;
-		int k = d/2;
-		int r = d&1;
-		int B = k*n+r*b;
-		int W = k*b+r*w;
-		int dd = __gcd(B,W);
-		B /= dd;
-		W /= dd;
-		cout<<B<<"/"<<W<<"\n";
+		if (n == m) {
+			cout<<"1/0\n";
+			continue;
+		}
+		if (n%2 != m%2) {
+			cout<<"1/1\n";
+			continue;
+		}
+		if (n > m) swap(n,m);
+		ll t = (n+1)/2*(n+1);
+		ll u = m-n-1;
+		u /= 2;
+		t += u*n;
+		cout<<t<<"/"<<t-1<<"\n";	
 	}
 	return 0;
 }
